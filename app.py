@@ -18,8 +18,10 @@ location = Point( lat, lon )
 data = Daily( location, start, end )
 
 dados = data.fetch()
-dados = dados[['tavg', 'tmin', 'tmax', 'prcp', 'wspd', 'pres', 'tsun']]
+dados['data'] = dados.index
+dados = dados[['data','tavg', 'tmin', 'tmax', 'prcp', 'wspd', 'pres', 'tsun']]
 dados.rename( columns={
+    'data':'Data',
     'tavg': 'Temp. Média',
     'tmin': 'Temp. Min',
     'tmax': 'Temp. Max',
@@ -79,10 +81,13 @@ def climaTempo(cidade):
             location=[lat, lon], zoom_start=10
         )
         map.save( "mapa_cidade.html" )
+        dados_tabela = dados.copy()
+        dados_tabela = dados_tabela.sort_values( by=['Data'], ascending=False )
+        dados_tabela['Data'] = dados_tabela['Data'].dt.strftime('%d-%m-%Y')
 
 
         return (dash_table.DataTable(
-            dados.to_dict( "records" ),
+            dados_tabela.to_dict( "records" ),
             style_cell={"textAlign": "center"},
             page_size=30,
             style_data_conditional=[
@@ -115,19 +120,19 @@ def grafico(tipo_grafico):
             fig = go.Figure(
                 data=[
                     go.Scatter(
-                        x=dados.index,
+                        x=dados['Data'],
                         y=dados['Temp. Média'],
                         line=dict( color="blue", width=2 ),
                         name="Temperatura Média",
                     ),
                     go.Scatter(
-                        x=dados.index,
+                        x=dados['Data'],
                         y=dados['Temp. Max'],
                         line=dict( color="red", width=2 ),
                         name="Temperatura Máxima",
                     ),
                     go.Scatter(
-                        x=dados.index,
+                        x=dados['Data'],
                         y=dados['Temp. Min'],
                         line=dict( color="green", width=2 ),
                         name="Temperatura Mínima",
@@ -138,7 +143,7 @@ def grafico(tipo_grafico):
             fig = go.Figure(
                 data=[
                     go.Scatter(
-                        x=dados.index,
+                        x=dados['Data'],
                         y=dados['Veloc. Vento'],
                         line=dict( color="blue", width=2 ),
                         name="Velocidade do Vento",
@@ -146,7 +151,7 @@ def grafico(tipo_grafico):
                 ] )
             return fig
         elif tipo_grafico == 'Precipitacao':
-            fig = px.bar(dados, x=dados.index, y=dados['Precipitação'])
+            fig = px.bar(dados, x=dados['Data'], y=dados['Precipitação'])
             return fig
 
 
